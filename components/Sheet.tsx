@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface SheetProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface SheetProps {
 /**
  * iOS-style modal container. Defaults to bottom-sheet with grab handle.
  * Locks body scroll while open and dismisses on backdrop tap.
+ * Renders via Portal to bypass any ancestor containing-block (transform/filter/etc).
  */
 export const Sheet: React.FC<SheetProps> = ({
   open,
@@ -32,19 +34,14 @@ export const Sheet: React.FC<SheetProps> = ({
 
   if (!open) return null;
 
-  if (variant === 'alert') {
-    return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-fade-in-soft">
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-        <div className={`relative bg-white/95 backdrop-blur-ios ${maxWidth} w-full rounded-ios-lg shadow-ios-elevated overflow-hidden`}>
-          {children}
-        </div>
+  const node = variant === 'alert' ? (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-fade-in-soft">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className={`relative bg-white/95 backdrop-blur-ios ${maxWidth} w-full rounded-ios-lg shadow-ios-elevated overflow-hidden`}>
+        {children}
       </div>
-    );
-  }
-
-  // Bottom sheet
-  return (
+    </div>
+  ) : (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center animate-fade-in-soft">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={onClose} />
       <div
@@ -66,4 +63,6 @@ export const Sheet: React.FC<SheetProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(node, document.body);
 };
