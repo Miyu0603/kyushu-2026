@@ -1,0 +1,245 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { ITINERARY } from '../constants';
+import { ItineraryEvent } from '../types';
+import { BedIcon, MapIcon } from '../components/Icons';
+
+interface ItineraryViewProps {
+  onNavigateToDetail: (id: string) => void;
+  selectedDateIdx: number;
+  setSelectedDateIdx: (idx: number) => void;
+}
+
+/* ── Category System ── */
+type EventCategory = 'flight' | 'hotel' | 'car' | 'train' | 'shrine' | 'nature' | 'food' | 'shopping' | 'entertainment' | 'default';
+
+// Muted iOS-system-color palette (lower saturation)
+const CAT: Record<EventCategory, { color: string; bg: string }> = {
+  flight: { color: '#0A84FF', bg: 'rgba(10,132,255,0.10)' },
+  hotel: { color: '#FF9500', bg: 'rgba(255,149,0,0.10)' },
+  car: { color: '#5AC8FA', bg: 'rgba(90,200,250,0.12)' },
+  train: { color: '#007AFF', bg: 'rgba(0,122,255,0.10)' },
+  shrine: { color: '#AF52DE', bg: 'rgba(175,82,222,0.10)' },
+  nature: { color: '#34C759', bg: 'rgba(52,199,89,0.10)' },
+  food: { color: '#FF6B35', bg: 'rgba(255,107,53,0.10)' },
+  shopping: { color: '#FFCC00', bg: 'rgba(255,204,0,0.14)' },
+  entertainment: { color: '#BF5AF2', bg: 'rgba(191,90,242,0.10)' },
+  default: { color: '#8E8E93', bg: 'rgba(142,142,147,0.12)' },
+};
+
+function getCategory(desc: string, note?: string): EventCategory {
+  const d = `${desc} ${note || ''}`;
+  if (/機場|搭機|航班|登機|起飛|班機/.test(d)) return 'flight';
+  if (/入住|退房|飯店|旅館|酒店|民宿|寄放行李/.test(d)) return 'hotel';
+  if (/取車|還車|租車|自駕|開回|BUDGET|NISSAN|加油/.test(d)) return 'car';
+  if (/JR|新幹線|由布院之森|鐵道|特急|搭乘|搭.*前往|搭.*到|轉車/.test(d)) return 'train';
+  if (/神社|神宮|天滿宮|神樂|涅槃|南藏院|鳥居|稻荷|竈門/.test(d)) return 'shrine';
+  if (/火山|峽|草千里|日出|國見|地獄|金鱗湖|太陽花園|水族館|海洋世界|散策|湯之坪|海岸|洗衣板|Sun Messe/.test(d)) return 'nature';
+  if (/晚餐|午餐|早餐|美食|屋台|餐廳/.test(d)) return 'food';
+  if (/購物|LaLaport|運河城|AMU|買/.test(d)) return 'shopping';
+  if (/博物館|熊本城|門司港|城彩苑|鋼彈/.test(d)) return 'entertainment';
+  return 'default';
+}
+
+const CatIcon: React.FC<{ cat: EventCategory }> = ({ cat }) => {
+  const p = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.1, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  switch (cat) {
+    case 'flight':
+      return <svg {...p}><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.8.2 1.1L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.6 5.4c.3.3.7.4 1.1.2l.5-.3c.4-.2.6-.6.5-1.1z" /></svg>;
+    case 'hotel':
+      return <svg {...p}><path d="M3 21V10" /><path d="M21 21V10" /><path d="M3 14h18" /><path d="M3 14v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4" /><circle cx="7.5" cy="10" r="1.5" fill="currentColor" /><path d="M3 21h18" /></svg>;
+    case 'car':
+      return <svg {...p}><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11" /><path d="M3 17h1a1 1 0 0 0 1-1v-1h14v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-4.5a1 1 0 0 0-.1-.5L19 7H5l-2.9 4.9a1 1 0 0 0-.1.5V16a1 1 0 0 0 1 1z" /><circle cx="7.5" cy="17.5" r="1.5" fill="currentColor" /><circle cx="16.5" cy="17.5" r="1.5" fill="currentColor" /></svg>;
+    case 'train':
+      return <svg {...p}><rect x="4" y="3" width="16" height="16" rx="3" /><path d="M4 11h16" /><path d="M12 3v8" /><path d="M8 19l-2 3" /><path d="M16 19l2 3" /><circle cx="8" cy="15" r="1.5" fill="currentColor" stroke="none" /><circle cx="16" cy="15" r="1.5" fill="currentColor" stroke="none" /></svg>;
+    case 'shrine':
+      return <svg {...p}><path d="M1 8h22" /><path d="M5 8l3-5h8l3 5" /><path d="M7 8v13" /><path d="M17 8v13" /><path d="M2 21h20" /><path d="M7 12.5h10" /></svg>;
+    case 'nature':
+      return <svg {...p}><path d="M8 21l4-10 4 10" /><path d="M2 21h20" /><circle cx="12" cy="7" r="3" /></svg>;
+    case 'food':
+      return <svg {...p}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3m0 0v7" /></svg>;
+    case 'shopping':
+      return <svg {...p}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>;
+    case 'entertainment':
+      return <svg {...p}><rect x="2" y="4" width="20" height="16" rx="3" /><path d="M2 10h20" /><circle cx="8" cy="15" r="1" fill="currentColor" stroke="none" /><circle cx="16" cy="15" r="1" fill="currentColor" stroke="none" /></svg>;
+    default:
+      return <svg {...p}><circle cx="12" cy="10" r="3" fill="currentColor" /><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z" /></svg>;
+  }
+};
+
+const TimelineEvent: React.FC<{
+  event: ItineraryEvent;
+  isLast: boolean;
+  onLocationClick: (id: string) => void;
+  nextCategory?: EventCategory;
+}> = ({ event, isLast, onLocationClick, nextCategory }) => {
+  const cat = getCategory(event.description, event.note);
+  const style = CAT[cat];
+  const nextStyle = nextCategory ? CAT[nextCategory] : style;
+
+  return (
+    <div className="flex relative">
+      <div className="w-[48px] shrink-0 flex items-start pt-2.5 justify-end pr-2.5">
+        <span className="text-[12px] font-mono font-semibold text-ios-label-2 leading-none">{event.time}</span>
+      </div>
+
+      <div className="flex flex-col items-center relative w-10 shrink-0">
+        <div
+          className="w-10 h-10 rounded-ios flex items-center justify-center z-10 shrink-0"
+          style={{ backgroundColor: style.bg, color: style.color }}
+        >
+          <CatIcon cat={cat} />
+        </div>
+        {!isLast && (
+          <div
+            className="w-[3px] flex-grow my-1 rounded-full"
+            style={{ background: `linear-gradient(to bottom, ${style.color}55, ${nextStyle.color}55)` }}
+          />
+        )}
+      </div>
+
+      <div className="flex-1 pb-3.5 min-w-0 ml-3 pt-[1px]">
+        <div
+          onClick={() => event.locationId && onLocationClick(event.locationId)}
+          className={`relative bg-ios-card rounded-ios border border-ios-separator shadow-ios-card p-4 transition-transform ${event.locationId ? 'cursor-pointer active:scale-[0.98]' : ''}`}
+        >
+          <p className="text-[15px] font-semibold text-ios-label leading-snug">{event.description}</p>
+          {event.note && (
+            <p className="text-[13px] text-ios-label-2 mt-1 leading-snug">{event.note}</p>
+          )}
+          {event.locationId && (
+            <p className="text-[12px] text-mag-gold font-semibold mt-2">查看詳情 ›</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ── Sticky Date Chip Strip ── */
+const DateChipStrip: React.FC<{
+  selectedIdx: number;
+  onSelect: (idx: number) => void;
+}> = ({ selectedIdx, onSelect }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current?.querySelector<HTMLElement>(`[data-idx="${selectedIdx}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [selectedIdx]);
+
+  return (
+    <div
+      className="sticky z-20 -mx-5 px-5 bg-ios-bg/85 backdrop-blur-ios border-b border-ios-separator"
+      style={{ top: 'calc(env(safe-area-inset-top) + 64px)' }}
+    >
+      <div ref={containerRef} className="flex gap-2 overflow-x-auto py-2.5 no-scrollbar">
+        {ITINERARY.map((day, idx) => {
+          const active = idx === selectedIdx;
+          return (
+            <button
+              key={idx}
+              data-idx={idx}
+              onClick={() => onSelect(idx)}
+              className={`shrink-0 flex flex-col items-center justify-center min-w-[52px] h-[56px] px-2 rounded-ios transition-all active:scale-95 ${active ? 'bg-mag-gold text-white shadow-soft' : 'bg-ios-fill-3 text-ios-label'}`}
+            >
+              <span className={`text-[10px] font-semibold leading-none ${active ? 'text-white/90' : 'text-ios-label-2'}`}>
+                {day.weekday[2]}
+              </span>
+              <span className={`text-[18px] font-bold font-mono leading-none mt-1.5 ${active ? 'text-white' : 'text-ios-label'}`}>
+                {day.date.split('/')[1]}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export const ItineraryView: React.FC<ItineraryViewProps> = ({ onNavigateToDetail, selectedDateIdx, setSelectedDateIdx }) => {
+  const currentDay = ITINERARY[selectedDateIdx];
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.scrollY > 300);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <div className="animate-fade-in-soft">
+      <DateChipStrip selectedIdx={selectedDateIdx} onSelect={setSelectedDateIdx} />
+
+      <div>
+        {/* Day Header */}
+        <div className="mb-5 relative pt-5">
+          <div className="pr-14">
+            <h2 className="text-ios-title2 font-bold text-ios-label leading-tight tracking-tight">
+              {currentDay.title}
+            </h2>
+            {currentDay.accommodation && (
+              <div className="flex items-center gap-2 mt-2">
+                <BedIcon className="w-4 h-4 text-mag-gold" />
+                {currentDay.accommodationMapUrl ? (
+                  <a
+                    href={currentDay.accommodationMapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[14px] font-medium text-ios-label-2 active:text-mag-gold"
+                  >
+                    {currentDay.accommodation}
+                  </a>
+                ) : (
+                  <span className="text-[14px] font-medium text-ios-label-2">
+                    {currentDay.accommodation}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          {currentDay.mapUrl && (
+            <a
+              href={currentDay.mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute right-0 top-5 w-11 h-11 flex items-center justify-center bg-mag-gold text-white rounded-ios shadow-float active:scale-90 transition-transform"
+              aria-label="開啟地圖"
+            >
+              <MapIcon className="w-5 h-5" />
+            </a>
+          )}
+        </div>
+
+        {/* Timeline */}
+        <div className="relative">
+          {currentDay.events.map((event, idx) => {
+            const nextCat =
+              idx < currentDay.events.length - 1
+                ? getCategory(currentDay.events[idx + 1].description, currentDay.events[idx + 1].note)
+                : undefined;
+            return (
+              <TimelineEvent
+                key={idx}
+                event={event}
+                isLast={idx === currentDay.events.length - 1}
+                onLocationClick={onNavigateToDetail}
+                nextCategory={nextCat}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        aria-label="回到頂部"
+        className={`fixed right-5 z-40 w-11 h-11 flex items-center justify-center bg-mag-gold text-white rounded-full shadow-float transition-all duration-300 active:scale-90 ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6 pointer-events-none'}`}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 96px)' }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="18 15 12 9 6 15" />
+        </svg>
+      </button>
+    </div>
+  );
+};

@@ -70,34 +70,32 @@ const TAB_META: Record<Tab, { label: string; Icon: React.FC<{ active: boolean }>
 export const TabBar: React.FC<TabBarProps> = ({ activeTab, onChange }) => {
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-ios border-t border-ios-separator"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="bg-white/95 backdrop-blur-ios border-t border-ios-separator">
-        <div className="max-w-xl mx-auto flex">
-          {Object.values(Tab).map((tab) => {
-            const meta = TAB_META[tab];
-            const active = activeTab === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => onChange(tab)}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[52px] active:opacity-60 transition-opacity"
-                aria-label={meta.label}
-                aria-current={active ? 'page' : undefined}
+      <div className="max-w-xl mx-auto flex">
+        {Object.values(Tab).map((tab) => {
+          const meta = TAB_META[tab];
+          const active = activeTab === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => onChange(tab)}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-h-[52px] active:opacity-60 transition-opacity"
+              aria-label={meta.label}
+              aria-current={active ? 'page' : undefined}
+            >
+              <span className={active ? 'text-mag-gold' : 'text-ios-label-2'}>
+                <meta.Icon active={active} />
+              </span>
+              <span
+                className={`text-[10px] leading-none tracking-tight ${active ? 'text-mag-gold font-semibold' : 'text-ios-label-2 font-medium'}`}
               >
-                <span className={active ? 'text-mag-gold' : 'text-ios-label-2'}>
-                  <meta.Icon active={active} />
-                </span>
-                <span
-                  className={`text-[10px] leading-none tracking-tight ${active ? 'text-mag-gold font-semibold' : 'text-ios-label-2 font-medium'}`}
-                >
-                  {meta.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                {meta.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </nav>
   );

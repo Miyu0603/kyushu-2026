@@ -1,0 +1,350 @@
+
+import React, { useState, useMemo } from 'react';
+import { GOOGLE_SCRIPT_URL, GOOGLE_SHEET_URL } from '../constants';
+import { SheetIcon, PlusIcon, RefreshIcon, EditIcon, TrashIcon } from '../components/Icons';
+import { ExpenseRecord } from '../types';
+import { Sheet } from '../components/Sheet';
+import { ConfirmDeleteSheet } from '../components/TextInputSheet';
+
+interface CostViewProps {
+  expenses: ExpenseRecord[];
+  isLoading: boolean;
+  fetchError: string | null;
+  onRefresh: () => void;
+  onAddSuccess: () => void;
+}
+
+const XIANG_COLOR = '#E91E63';
+const QIAN_COLOR = '#2196F3';
+
+export const CostView: React.FC<CostViewProps> = ({ expenses, isLoading, onRefresh, onAddSuccess }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [mode, setMode] = useState<'add' | 'edit'>('add');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+
+  const [date, setDate] = useState('');
+  const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState<'JPY' | 'TWD'>('JPY');
+  const [item, setItem] = useState('');
+  const [payer, setPayer] = useState<'想想' | '錢錢'>('想想');
+  const [note, setNote] = useState('');
+  const [splitType, setSplitType] = useState<'equal' | 'manual'>('equal');
+  const [manualXiangInput, setManualXiangInput] = useState('');
+  const [manualQianInput, setManualQianInput] = useState('');
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showSettlement, setShowSettlement] = useState(false);
+
+  const totalTWD = expenses.reduce((sum, r) => sum + r.amountTwd, 0);
+  const totalJPY = expenses.reduce((sum, r) => sum + r.amountJpy, 0);
+
+  const settlement = useMemo(() => {
+    let xiangPaidTwd = 0, xiangPaidJpy = 0, xiangShouldPayTwd = 0, xiangShouldPayJpy = 0;
+    expenses.forEach(r => {
+      if (r.payer === '想想') { xiangPaidTwd += r.amountTwd; xiangPaidJpy += r.amountJpy; }
+      xiangShouldPayTwd += r.splitXiangTwd || 0;
+      xiangShouldPayJpy += r.splitXiangJpy || 0;
+    });
+    return { twd: xiangPaidTwd - xiangShouldPayTwd, jpy: xiangPaidJpy - xiangShouldPayJpy };
+  }, [expenses]);
+
+  const handleAmountChange = (val: string) => {
+    setAmount(val);
+    if (val) {
+      const total = Number(val) || 0;
+      setManualXiangInput(String(Math.round(total / 2)));
+      setManualQianInput(String(total - Math.round(total / 2)));
+    }
+  };
+
+  const handleManualXiangChange = (val: string) => {
+    setManualXiangInput(val);
+    const total = Number(amount) || 0;
+    setManualQianInput(String(total - (Number(val) || 0)));
+  };
+  const handleManualQianChange = (val: string) => {
+    setManualQianInput(val);
+    const total = Number(amount) || 0;
+    setManualXiangInput(String(total - (Number(val) || 0)));
+  };
+
+  const handleOpenAdd = () => {
+    setMode('add'); setEditingRowIndex(null);
+    const today = new Date();
+    setDate(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
+    setAmount(''); setItem(''); setPayer('想想'); setNote(''); setCurrency('JPY'); setSplitType('equal');
+    setManualXiangInput(''); setManualQianInput('');
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (e: React.MouseEvent, record: ExpenseRecord) => {
+    e.stopPropagation(); setMode('edit'); setEditingRowIndex(record.rowIndex);
+    const d = new Date(record.date);
+    setDate(!isNaN(d.getTime()) ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : '');
+    setItem(record.item); setPayer(record.payer); setNote(record.note || ''); setSplitType(record.splitType || 'equal');
+    const amt = record.amountTwd > 0 ? record.amountTwd : record.amountJpy;
+    setAmount(String(amt));
+    setCurrency(record.amountTwd > 0 ? 'TWD' : 'JPY');
+    const xVal = record.amountTwd > 0 ? record.splitXiangTwd : record.splitXiangJpy;
+    const qVal = record.amountTwd > 0 ? record.splitQianTwd : record.splitQianJpy;
+    setManualXiangInput(String(xVal));
+    setManualQianInput(String(qVal));
+    setShowModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteConfirmId === null) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'delete', rowIndex: deleteConfirmId }) });
+      const result = await res.json();
+      if (result.result === "success") { setDeleteConfirmId(null); onAddSuccess(); }
+    } catch { console.error("刪除失敗"); } finally { setIsDeleting(false); }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); if (!amount || !item) return;
+    setIsSubmitting(true);
+    const total = Number(amount) || 0;
+    let xA = splitType === 'equal' ? total / 2 : (Number(manualXiangInput) || 0);
+    let qA = total - xA;
+    const payload = {
+      action: mode, rowIndex: editingRowIndex, date: date.replace(/-/g, '/'), item: item.trim(), payer,
+      amountTwd: currency === 'TWD' ? total : 0, amountJpy: currency === 'JPY' ? total : 0, note: note.trim(), splitType,
+      splitXiangTwd: currency === 'TWD' ? xA : 0, splitXiangJpy: currency === 'JPY' ? xA : 0,
+      splitQianTwd: currency === 'TWD' ? qA : 0, splitQianJpy: currency === 'JPY' ? qA : 0
+    };
+    try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) }); setShowModal(false); onAddSuccess(); }
+    catch { console.error("儲存失敗"); } finally { setIsSubmitting(false); }
+  };
+
+  const renderSettlementItem = (amount: number, currency: 'TWD' | 'JPY') => {
+    const absAmount = Math.abs(Math.round(amount));
+    const symbol = currency === 'TWD' ? '$' : '¥';
+    if (absAmount === 0) {
+      return (
+        <div className="bg-ios-fill-4 rounded-ios p-6 flex flex-col items-center">
+          <div className="text-[11px] font-semibold text-ios-label-2 tracking-wide mb-2">{currency}</div>
+          <div className="text-[20px] font-semibold text-ios-label-3">已結清</div>
+        </div>
+      );
+    }
+    const debtor = amount > 0 ? '錢錢' : '想想';
+    const creditor = amount > 0 ? '想想' : '錢錢';
+    const debtorColor = debtor === '想想' ? XIANG_COLOR : QIAN_COLOR;
+    const creditorColor = creditor === '想想' ? XIANG_COLOR : QIAN_COLOR;
+    return (
+      <div className="bg-ios-fill-4 rounded-ios p-6 flex flex-col items-center">
+        <div className="text-[11px] font-semibold text-ios-label-2 tracking-wide mb-3">{currency}</div>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-[15px] font-semibold" style={{ color: debtorColor }}>{debtor}</span>
+          <span className="text-ios-label-3">→</span>
+          <span className="text-[15px] font-semibold" style={{ color: creditorColor }}>{creditor}</span>
+        </div>
+        <div className="text-[28px] font-mono font-bold text-ios-label">
+          {symbol}{absAmount.toLocaleString()}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="pb-4 pt-3 animate-fade-in-soft">
+      {/* Summary Card */}
+      <div className="bg-ios-card border border-ios-separator rounded-ios-lg overflow-hidden mb-6 shadow-ios-card">
+        <div className="px-5 py-3 flex justify-between items-center border-b border-ios-separator">
+          <h2 className="text-[17px] font-semibold text-ios-label">旅費總覽</h2>
+          <button onClick={onRefresh} aria-label="重新整理" className="min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center text-ios-label-2 active:text-ios-label">
+            <RefreshIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 divide-x divide-ios-separator border-b border-ios-separator">
+          <div className="p-4 text-center">
+            <div className="text-[11px] font-semibold text-ios-label-2 mb-1">JPY</div>
+            <div className="text-[24px] font-bold text-ios-label font-mono leading-none">¥{totalJPY.toLocaleString()}</div>
+          </div>
+          <div className="p-4 text-center">
+            <div className="text-[11px] font-semibold text-ios-label-2 mb-1">TWD</div>
+            <div className="text-[24px] font-bold text-ios-label font-mono leading-none">${totalTWD.toLocaleString()}</div>
+          </div>
+        </div>
+        <button onClick={() => setShowSettlement(true)} className="w-full bg-mag-gold text-white py-3.5 font-semibold text-[15px] flex items-center justify-center gap-2 active:opacity-80 transition-opacity">
+          結算精算
+        </button>
+      </div>
+
+      <div className="flex justify-between items-center mb-3 px-1">
+        <h3 className="text-[17px] font-semibold text-ios-label">支出明細</h3>
+        <button onClick={handleOpenAdd} aria-label="新增消費" className="min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center text-mag-gold active:opacity-60">
+          <div className="w-9 h-9 rounded-full bg-mag-gold-light flex items-center justify-center">
+            <PlusIcon className="w-5 h-5" />
+          </div>
+        </button>
+      </div>
+
+      <div className="space-y-2.5">
+        {expenses.length === 0 && !isLoading && (
+          <div className="text-center py-12 text-ios-label-3 font-medium border border-dashed border-ios-separator-strong rounded-ios-lg bg-ios-card">尚無支出明細</div>
+        )}
+        {isLoading && expenses.length === 0 && (
+          // Skeleton rows
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-ios-card rounded-ios border border-ios-separator p-4 animate-pulse">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-4 bg-ios-fill-3 rounded" />
+                <div className="flex-1 h-4 bg-ios-fill-3 rounded" />
+                <div className="w-16 h-5 bg-ios-fill-3 rounded" />
+              </div>
+              <div className="mt-2 w-20 h-3 bg-ios-fill-4 rounded" />
+            </div>
+          ))
+        )}
+        {expenses.map((record) => (
+          <div
+            key={record.rowIndex}
+            className="bg-ios-card p-3.5 rounded-ios border border-ios-separator shadow-ios-card active:bg-ios-fill-4 flex items-center gap-2 overflow-hidden"
+            onClick={(e) => handleOpenEdit(e, record)}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className="shrink-0 px-2 py-0.5 text-[10px] font-semibold text-white rounded-full"
+                  style={{ backgroundColor: record.payer === '想想' ? XIANG_COLOR : QIAN_COLOR }}
+                >
+                  {record.payer}
+                </span>
+                <span className="text-[15px] font-semibold text-ios-label truncate">{record.item}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-mono text-ios-label-2">{record.date.split('T')[0].replace(/-/g, '/')}</span>
+                {record.splitType === 'manual' && (
+                  <span className="bg-[#FFF4D6] text-[#946800] text-[9px] px-1.5 py-0.5 font-semibold rounded shrink-0">手動分帳</span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="text-[17px] font-bold text-ios-label font-mono whitespace-nowrap">
+                {record.amountJpy > 0 ? `¥${record.amountJpy.toLocaleString()}` : `$${record.amountTwd.toLocaleString()}`}
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(record.rowIndex); }}
+                aria-label="刪除"
+                className="min-w-[36px] min-h-[36px] flex items-center justify-center text-ios-label-3 active:text-ios-red"
+              >
+                <TrashIcon className="w-[18px] h-[18px]" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-center mt-10">
+        <a href={GOOGLE_SHEET_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-ios-label-2 font-medium text-[12px] active:text-mag-gold">
+          <SheetIcon className="w-4 h-4" /> 開啟 Google Sheet
+        </a>
+      </div>
+
+      {/* Settlement Sheet */}
+      <Sheet open={showSettlement} onClose={() => setShowSettlement(false)} title="結算面板">
+        <div className="px-5 pb-5 space-y-3">
+          {renderSettlementItem(settlement.twd, 'TWD')}
+          {renderSettlementItem(settlement.jpy, 'JPY')}
+          <p className="pt-2 text-[12px] text-ios-label-2 text-center leading-relaxed">
+            結算金額由雙方支付總額與應付份額計算所得。<br />箭頭指向為應支付對象。
+          </p>
+        </div>
+      </Sheet>
+
+      {/* Add / Edit Sheet */}
+      <Sheet open={showModal} onClose={() => setShowModal(false)} title={mode === 'edit' ? '編輯消費' : '新增消費'}>
+        <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[12px] font-semibold text-ios-label-2 mb-1.5 block">日期</label>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                className="w-full bg-ios-fill-4 px-3 py-2.5 rounded-ios text-[15px] font-medium text-ios-label outline-none" />
+            </div>
+            <div>
+              <label className="text-[12px] font-semibold text-ios-label-2 mb-1.5 block">支付者</label>
+              <div className="flex bg-ios-fill-3 p-[3px] rounded-ios">
+                <button type="button" onClick={() => setPayer('想想')}
+                  className={`flex-1 py-2 text-[13px] font-semibold rounded-[11px] transition-all`}
+                  style={payer === '想想' ? { backgroundColor: XIANG_COLOR, color: '#fff' } : { color: '#3C3C43' }}>想想</button>
+                <button type="button" onClick={() => setPayer('錢錢')}
+                  className={`flex-1 py-2 text-[13px] font-semibold rounded-[11px] transition-all`}
+                  style={payer === '錢錢' ? { backgroundColor: QIAN_COLOR, color: '#fff' } : { color: '#3C3C43' }}>錢錢</button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[12px] font-semibold text-ios-label-2 mb-1.5 block">內容</label>
+            <input type="text" placeholder="輸入消費內容" value={item} onChange={e => setItem(e.target.value)}
+              className="w-full bg-ios-fill-4 px-3 py-2.5 rounded-ios text-[15px] font-medium text-ios-label outline-none placeholder:text-ios-label-3" />
+          </div>
+
+          <div>
+            <label className="text-[12px] font-semibold text-ios-label-2 mb-1.5 block">金額</label>
+            <div className="flex bg-ios-fill-4 items-center rounded-ios px-3 h-[56px] gap-2">
+              <input type="number" inputMode="decimal" placeholder="0" value={amount} onChange={e => handleAmountChange(e.target.value)}
+                className="flex-1 min-w-0 bg-transparent py-2 font-bold text-[24px] outline-none text-ios-label placeholder:text-ios-label-3" />
+              <div className="flex bg-white border border-ios-separator overflow-hidden rounded-ios-sm shrink-0">
+                <button type="button" onClick={() => setCurrency('JPY')} className={`px-3 py-1.5 text-[11px] font-semibold ${currency === 'JPY' ? 'bg-mag-gold text-white' : 'text-ios-label-2'}`}>JPY</button>
+                <button type="button" onClick={() => setCurrency('TWD')} className={`px-3 py-1.5 text-[11px] font-semibold ${currency === 'TWD' ? 'bg-mag-gold text-white' : 'text-ios-label-2'}`}>TWD</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-ios-fill-4 rounded-ios p-3 space-y-2.5">
+            <div className="flex justify-between items-center">
+              <label className="text-[13px] font-semibold text-ios-label">分帳模式</label>
+              <select value={splitType} onChange={e => setSplitType(e.target.value as any)}
+                className="appearance-none bg-white border border-ios-separator py-1.5 pl-3 pr-7 text-[12px] font-semibold rounded-ios-sm outline-none">
+                <option value="equal">平均分攤</option>
+                <option value="manual">自定義金額</option>
+              </select>
+            </div>
+            <div className="h-px bg-ios-separator" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-semibold mb-1 block" style={{ color: XIANG_COLOR }}>想想負擔</label>
+                <input type="number" inputMode="decimal" disabled={splitType === 'equal'}
+                  value={splitType === 'equal' ? (Math.round(Number(amount) / 2) || 0) : manualXiangInput}
+                  onChange={e => handleManualXiangChange(e.target.value)}
+                  className={`w-full bg-white px-2.5 py-2 text-[15px] font-mono font-bold border border-ios-separator rounded-ios-sm outline-none ${splitType === 'equal' ? 'opacity-60' : ''}`} />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold mb-1 block" style={{ color: QIAN_COLOR }}>錢錢負擔</label>
+                <input type="number" inputMode="decimal" disabled={splitType === 'equal'}
+                  value={splitType === 'equal' ? (Number(amount) - Math.round(Number(amount) / 2) || 0) : manualQianInput}
+                  onChange={e => handleManualQianChange(e.target.value)}
+                  className={`w-full bg-white px-2.5 py-2 text-[15px] font-mono font-bold border border-ios-separator rounded-ios-sm outline-none ${splitType === 'equal' ? 'opacity-60' : ''}`} />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[12px] font-semibold text-ios-label-2 mb-1.5 block">備註</label>
+            <input type="text" placeholder="選填項目細節" value={note} onChange={e => setNote(e.target.value)}
+              className="w-full bg-ios-fill-4 px-3 py-2.5 rounded-ios text-[14px] font-medium text-ios-label outline-none placeholder:text-ios-label-3" />
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3.5 bg-ios-fill-3 rounded-ios font-semibold text-[15px] text-ios-label active:opacity-60">取消</button>
+            <button type="submit" disabled={isSubmitting} className="flex-1 py-3.5 bg-mag-gold text-white rounded-ios font-semibold text-[15px] active:opacity-80">{isSubmitting ? '儲存中...' : '儲存項目'}</button>
+          </div>
+        </form>
+      </Sheet>
+
+      <ConfirmDeleteSheet
+        open={!!deleteConfirmId}
+        title="確定要刪除此項目？"
+        isProcessing={isDeleting}
+        onClose={() => setDeleteConfirmId(null)}
+        onConfirm={handleConfirmDelete}
+      />
+    </div>
+  );
+};
