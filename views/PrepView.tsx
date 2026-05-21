@@ -22,6 +22,7 @@ const VOUCHERS: { name: string; url: string; type?: 'hotel' | 'car' | 'train' }[
   { name: '新幹線鹿兒島到熊本 - 想想', url: 'https://drive.google.com/open?id=1tZVbKUMg7ScS7-maX4l7jQ5IKfKLHj_T', type: 'train' },
   { name: '由布院之森指定席', url: 'https://drive.google.com/open?id=1wV45yhIoCK6EFO_B42QOTYriHuWNZYDX', type: 'train' },
   { name: '北九州 JR PASS - 想想', url: 'https://drive.google.com/open?id=1-sopakaX4FE4uB6BTyTKIFZ0ypdq4YT6', type: 'train' },
+  { name: '北九州 JR PASS - 錢錢', url: 'https://drive.google.com/file/d/1zwC3_JDP0alWXMdGLe1ny8ha6UOX4d7u/view?usp=drive_link', type: 'train' },
   { name: '租車 - 宮崎當日', url: 'https://drive.google.com/open?id=1S7Nx4uR_575crPjRWl_tIgmCp8c6Iull', type: 'car' },
   { name: '租車 - 熊本到由布', url: 'https://drive.google.com/file/d/1o2H8t3rzsQjFhh_gdH6V8JR9wHasNh08/view?usp=drive_link', type: 'car' },
   { name: '高千穗神樂', url: 'https://drive.google.com/open?id=1yHbMi56Cq1JLoFDRubRLmNT-58q_fvlE' },
@@ -83,13 +84,13 @@ export const PrepView: React.FC<PrepViewProps> = ({ checkedItems, toggleItem, li
             <a key={idx} href={voucher.url} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-3 px-4 py-3.5 active:bg-ios-fill-3 transition-colors">
               {voucher.type === 'hotel'
-                  ? <BedIcon className="w-5 h-5 text-mag-gold shrink-0" />
-                  : voucher.type === 'car'
+                ? <BedIcon className="w-5 h-5 text-mag-gold shrink-0" />
+                : voucher.type === 'car'
                   ? <CarIcon className="w-5 h-5 text-mag-gold shrink-0" />
                   : voucher.type === 'train'
-                  ? <TrainIcon className="w-5 h-5 text-mag-gold shrink-0" />
-                  : <SheetIcon className="w-5 h-5 text-mag-gold shrink-0" />
-                }
+                    ? <TrainIcon className="w-5 h-5 text-mag-gold shrink-0" />
+                    : <SheetIcon className="w-5 h-5 text-mag-gold shrink-0" />
+              }
               <span className="flex-1 text-[15px] font-medium text-ios-label">{voucher.name}</span>
               <ExternalLinkIcon className="w-4 h-4 text-ios-label-3 shrink-0" />
             </a>
