@@ -73,7 +73,7 @@ export const TabBar: React.FC<TabBarProps> = ({ activeTab, onChange }) => {
       className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-ios border-t border-ios-separator"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="max-w-xl mx-auto flex">
+      <div className="flex">
         {Object.values(Tab).map((tab) => {
           const meta = TAB_META[tab];
           const active = activeTab === tab;

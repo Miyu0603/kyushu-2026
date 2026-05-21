@@ -188,8 +188,8 @@ const DateChipStrip: React.FC<{
 
   return (
     <div
-      className="sticky z-20 -mx-6 px-6 bg-ios-bg/95 backdrop-blur-ios border-b border-ios-separator"
-      style={{ top: 0 }}
+      className="sticky z-20 -mx-4 px-4 bg-ios-bg/95 backdrop-blur-ios border-b border-ios-separator"
+      style={{ top: 'calc(env(safe-area-inset-top) + 68px)' }}
     >
       <div ref={containerRef} className="flex gap-3 overflow-x-auto py-3.5 no-scrollbar">
         {ITINERARY.map((day, idx) => {

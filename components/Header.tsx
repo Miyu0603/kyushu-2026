@@ -18,10 +18,10 @@ const getWeatherIcon = (code: number) => {
 export const Header: React.FC<HeaderProps> = ({ weather }) => {
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-30 bg-white backdrop-blur-ios border-b border-ios-separator"
+      className="fixed top-0 left-0 right-0 z-30 bg-white backdrop-blur-ios"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
-      <div className="max-w-xl mx-auto flex items-center justify-between px-6 py-4">
+      <div className="flex items-center justify-between px-4 py-3">
         <div>
           <span className="inline-block bg-mag-gold text-white text-[10px] font-semibold tracking-widest px-2 py-0.5 rounded mb-1.5 font-mono">
             2026.06

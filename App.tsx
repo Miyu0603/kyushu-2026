@@ -156,10 +156,10 @@ const App: React.FC = () => {
       <Header weather={weather} />
 
       <main
-        className="max-w-xl mx-auto px-6 h-full overflow-y-auto overscroll-contain bg-ios-bg"
+        className="px-4 h-full overflow-y-auto overscroll-contain bg-ios-bg"
         style={{
-          paddingTop: 'calc(env(safe-area-inset-top) + 90px)',
-          paddingBottom: 'calc(env(safe-area-inset-bottom) + 92px)',
+          paddingTop: 'calc(env(safe-area-inset-top) + 68px)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 72px)',
           WebkitOverflowScrolling: 'touch',
         }}
       >
