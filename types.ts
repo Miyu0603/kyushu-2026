@@ -8,8 +8,9 @@ export interface LocationDetail {
   mapUrl?: string;
   websiteUrl?: string;
   carNaviPhone?: string; // For Japanese Car GPS
-  imageUrl?: string; // New: Image to display in detail view
-  transitLegs?: TransitLeg[]; // New: Structured transit info
+  mapCode?: string;      // Japanese car navi map code (マップコード)
+  imageUrl?: string;
+  transitLegs?: TransitLeg[];
   reservation?: {
     id: string;
     sections: ReservationSection[];
@@ -81,7 +82,7 @@ export interface ExpenseRecord {
   amountJpy: number;
   note: string;
   // New Split Fields
-  splitType: 'equal' | 'manual';
+  splitType: 'equal' | 'split65' | 'manual';
   splitXiangTwd: number;
   splitXiangJpy: number;
   splitQianTwd: number;

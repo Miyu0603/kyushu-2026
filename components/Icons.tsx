@@ -2,19 +2,19 @@
 import React from 'react';
 
 export const CheckIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter" className={className}>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <polyline points="20 6 9 17 4 12"></polyline>
   </svg>
 );
 
 export const BedIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter" className={className}>
-    <path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M2 4v16" /><path d="M2 8h18a2 2 0 0 1 2 2v10" /><path d="M2 17h20" /><path d="M6 8v9" />
   </svg>
 );
 
 export const MapIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter" className={className}>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
     <line x1="8" y1="2" x2="8" y2="18"></line>
     <line x1="16" y1="6" x2="16" y2="22"></line>
@@ -22,13 +22,13 @@ export const MapIcon = ({ className }: { className?: string }) => (
 );
 
 export const ChevronRightIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter" className={className}>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <polyline points="9 18 15 12 9 6"></polyline>
   </svg>
 );
 
 export const ExternalLinkIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter" className={className}>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
     <polyline points="15 3 21 3 21 9"></polyline>
     <line x1="10" y1="14" x2="21" y2="3"></line>
@@ -62,10 +62,12 @@ export const RefreshIcon = ({ className }: { className?: string }) => (
 
 export const CarIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <rect x="1" y="3" width="15" height="13"></rect>
-    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-    <circle cx="5.5" cy="18.5" r="2.5"></circle>
-    <circle cx="18.5" cy="18.5" r="2.5"></circle>
+    <path d="M5 17H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 .08-.38l2.5-6A1 1 0 0 1 5.5 5h13a1 1 0 0 1 .92.62l2.5 6A1 1 0 0 1 22 12v4a1 1 0 0 1-1 1h-2" />
+    <circle cx="7.5" cy="17.5" r="2.5" />
+    <circle cx="16.5" cy="17.5" r="2.5" />
+    <path d="M5 12h14" />
+    <path d="M9 5l-1.5 7" />
+    <path d="M15 5l1.5 7" />
   </svg>
 );
 
@@ -139,9 +141,9 @@ export const SnowIcon = ({ className }: { className?: string }) => (
 
 export const ShoppingIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-    <line x1="3" y1="6" x2="21" y2="6"></line>
-    <path d="M16 10a4 4 0 0 1-8 0"></path>
+    <circle cx="9" cy="21" r="1"></circle>
+    <circle cx="20" cy="21" r="1"></circle>
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
   </svg>
 );
 
@@ -163,5 +165,18 @@ export const XIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <line x1="18" y1="6" x2="6" y2="18"></line>
     <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
+
+export const TrainIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    {/* 車身：左側圓弧車頭，右側平頭 */}
+    <path d="M9 6 Q2 6 2 12 Q2 17 9 17 L20 17 Q22 17 22 15 L22 9 Q22 6 20 6 Z" />
+    {/* 車窗 */}
+    <rect x="10" y="8" width="3" height="3" rx="0.5" />
+    <rect x="15" y="8" width="3" height="3" rx="0.5" />
+    {/* 車輪 */}
+    <circle cx="9" cy="19.5" r="1.5" />
+    <circle cx="19" cy="19.5" r="1.5" />
   </svg>
 );

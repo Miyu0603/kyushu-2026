@@ -1,8 +1,9 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { PRE_TRIP_NOTES } from '../constants';
 import { ChecklistItem } from '../types';
-import { CheckIcon, TrashIcon, EditIcon, PlusIcon, XIcon, SheetIcon, ExternalLinkIcon } from '../components/Icons';
+import { CheckIcon, TrashIcon, EditIcon, PlusIcon, SheetIcon, ExternalLinkIcon, BedIcon, CarIcon, TrainIcon } from '../components/Icons';
+import { TextInputSheet, ConfirmDeleteSheet } from '../components/TextInputSheet';
 
 interface PrepViewProps {
   checkedItems: Set<string>;
@@ -11,16 +12,19 @@ interface PrepViewProps {
   setList: (list: ChecklistItem[]) => void;
 }
 
-const VOUCHERS = [
-  { name: '航班 (Flight Ticket)', url: 'https://drive.google.com/file/d/1uhAF9Our8jLhDNwWqhHH5FUOxCauOInF/view?usp=sharing' },
-  { name: 'Skyliner (Klook)', url: 'https://drive.google.com/file/d/15h89CDz2vxCdvvftBDLqhtFWLsgirWZp/view?usp=sharing' },
-  { name: 'Skyliner (KKday)', url: 'https://drive.google.com/file/d/1kGfpY8EegpQJWn_mGjAMo_ZXISk52ZW8/view?usp=sharing' },
-  { name: '租車憑證', url: 'https://drive.google.com/file/d/1kxv4QwdmiQmsWUKJ_TRjwRFKS9J96aPk/view?usp=drive_link' },
-  { name: '超級飯店淺草', url: 'https://drive.google.com/file/d/1ouzUTLlbnmaonE4dG6zgd1xRz6dSpyXc/view?usp=drive_link' },
-  { name: '超級飯店御殿場2號館', url: 'https://drive.google.com/file/d/1aBnceOHoFX-Z1-ACjKxBGtSY2g8Bgtcg/view?usp=drive_link' },
-  { name: '富士河口湖溫泉新世紀飯店', url: 'https://drive.google.com/file/d/11W_yXiv9smooCziFY3cgm5MA1cs7ReKb/view?usp=drive_link' },
-  { name: '高速巴士東京到河口湖', url: 'https://drive.google.com/file/d/1Prq8OuI3U3YHnczZNrnD1fAHME3T_NPn/view?usp=drive_link' },
-  { name: '高速巴士御殿場到東京', url: 'https://drive.google.com/file/d/1_SsCKBaWnwsNkJZcWBVB2uWKBSZTXkQR/view?usp=drive_link' },
+const VOUCHERS: { name: string; url: string; type?: 'hotel' | 'car' | 'train' }[] = [
+  { name: 'ART 宮崎天空塔酒店', url: 'https://drive.google.com/open?id=1869YGwJEq7yfKSikvL2D6zc3SjY5JPuO', type: 'hotel' },
+  { name: 'スーパーホテル熊本駅前天然温泉', url: 'https://drive.google.com/open?id=1pwhxJPfWe6Ysv5Kpl-Gr0_z4yqIZ9itJ', type: 'hotel' },
+  { name: 'ゲストハウス静穂', url: 'https://drive.google.com/open?id=1KfTIdS1KCwnupW3fFsAVCsbAUa84Jolp', type: 'hotel' },
+  { name: '古都の花心', url: 'https://drive.google.com/open?id=1ECIyNidP2BNA8QFwLyVUb2o2ErTxeRvm', type: 'hotel' },
+  { name: 'ヴィアイン博多口駅前 - JR西日本グループ', url: 'https://drive.google.com/open?id=1yIxfAxiyv5e5TzJiWmr3r-XYWI2tpNMT', type: 'hotel' },
+  { name: '新幹線鹿兒島到熊本 - 錢錢', url: 'https://drive.google.com/open?id=1TLlO93IXwcCAnPvx01walM8sYeiDc2K9', type: 'train' },
+  { name: '新幹線鹿兒島到熊本 - 想想', url: 'https://drive.google.com/open?id=1tZVbKUMg7ScS7-maX4l7jQ5IKfKLHj_T', type: 'train' },
+  { name: '由布院之森指定席', url: 'https://drive.google.com/open?id=1wV45yhIoCK6EFO_B42QOTYriHuWNZYDX', type: 'train' },
+  { name: '北九州 JR PASS - 想想', url: 'https://drive.google.com/open?id=1-sopakaX4FE4uB6BTyTKIFZ0ypdq4YT6', type: 'train' },
+  { name: '租車 - 宮崎當日', url: 'https://drive.google.com/open?id=1S7Nx4uR_575crPjRWl_tIgmCp8c6Iull', type: 'car' },
+  { name: '租車 - 熊本到由布', url: 'https://drive.google.com/file/d/1o2H8t3rzsQjFhh_gdH6V8JR9wHasNh08/view?usp=drive_link', type: 'car' },
+  { name: '高千穗神樂', url: 'https://drive.google.com/open?id=1yHbMi56Cq1JLoFDRubRLmNT-58q_fvlE' },
 ];
 
 export const PrepView: React.FC<PrepViewProps> = ({ checkedItems, toggleItem, list, setList }) => {
@@ -29,190 +33,131 @@ export const PrepView: React.FC<PrepViewProps> = ({ checkedItems, toggleItem, li
   const [modalText, setModalText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const modalInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (showModal && modalInputRef.current) {
-      modalInputRef.current.focus();
-    }
-  }, [showModal]);
 
   const handleOpenAdd = () => {
-    setModalMode('add');
-    setModalText('');
-    setEditingId(null);
-    setShowModal(true);
+    setModalMode('add'); setModalText(''); setEditingId(null); setShowModal(true);
   };
-
   const handleOpenEdit = (item: ChecklistItem) => {
-    setModalMode('edit');
-    setModalText(item.text);
-    setEditingId(item.id);
-    setShowModal(true);
+    setModalMode('edit'); setModalText(item.text); setEditingId(item.id); setShowModal(true);
   };
-
-  const handleModalSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!modalText.trim()) return;
-
+  const handleSubmit = (text: string) => {
     if (modalMode === 'add') {
-      const newItem: ChecklistItem = { id: `todo_${Date.now()}`, text: modalText.trim() };
-      setList([...list, newItem]);
-    } else if (modalMode === 'edit' && editingId) {
-      setList(list.map(i => i.id === editingId ? { ...i, text: modalText.trim() } : i));
+      setList([...list, { id: `todo_${Date.now()}`, text }]);
+    } else if (editingId) {
+      setList(list.map(i => i.id === editingId ? { ...i, text } : i));
     }
-
-    setModalText('');
-    setShowModal(false);
   };
-
   const confirmDelete = () => {
-    if (deleteId) {
-      setList(list.filter(i => i.id !== deleteId));
-      setDeleteId(null);
-    }
+    if (deleteId) { setList(list.filter(i => i.id !== deleteId)); setDeleteId(null); }
   };
 
   return (
-    <div className="pb-32 pt-2 animate-in fade-in duration-500">
+    <div className="pb-4 pt-4 animate-fade-in-soft space-y-9">
 
-      {/* Section 1: Travel Notes */}
-      <div className="mb-8 bg-white border border-gray-100 shadow-soft p-5 relative overflow-hidden">
-        <div className="flex items-center gap-2 mb-4 border-b border-gray-50 pb-3">
-          <div className="w-1 h-4 bg-mag-gold"></div>
-          <h3 className="text-lg font-noto font-bold text-mag-black leading-none">旅途叮嚀</h3>
+      {/* Travel Notes */}
+      <section className="bg-ios-card border border-ios-separator shadow-ios-card rounded-ios-lg overflow-hidden">
+        <div className="px-5 pt-5 pb-3.5 flex items-center gap-2.5">
+          <div className="w-1 h-4 bg-mag-gold rounded-full" />
+          <h3 className="text-[17px] font-semibold text-ios-label leading-none tracking-tight">旅途叮嚀</h3>
         </div>
-
-        <div className="space-y-4">
+        <div className="px-5 pb-6 space-y-4">
           {PRE_TRIP_NOTES.map((note, idx) => (
-            <div key={idx} className="flex gap-3 items-baseline">
-              <span className="text-[12px] font-mono font-black text-mag-gold shrink-0 leading-none">
-                {(idx + 1).toString().padStart(2, '0')}
-              </span>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-mag-black leading-relaxed tracking-tight">
-                  {note}
-                </p>
+            <div key={idx} className="flex gap-3.5 items-start">
+              <div className="w-6 h-6 rounded-full bg-mag-gold-light flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-[11px] font-bold font-mono text-mag-gold leading-none">{idx + 1}</span>
               </div>
+              <p className="text-[14px] text-ios-label leading-relaxed flex-1 pt-0.5 tracking-tight">{note}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Section 2: Vouchers (Updated) */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4 px-1">
-          <h2 className="text-[10px] font-black tracking-[0.2em] text-mag-gray uppercase">所有憑證 Vouchers</h2>
+      {/* Vouchers */}
+      <section>
+        <div className="px-1 mb-2 flex items-center gap-2">
+          <div className="w-1 h-3.5 bg-mag-gold rounded-full" />
+          <h2 className="text-[13px] font-semibold text-ios-label-2">旅遊憑證</h2>
         </div>
-        <div className="bg-white rounded-none shadow-soft border border-gray-100 overflow-hidden divide-y divide-gray-50">
+        <div className="bg-ios-card rounded-ios-lg shadow-ios-card border border-ios-separator overflow-hidden divide-y divide-ios-separator">
           {VOUCHERS.map((voucher, idx) => (
-            <a
-              key={idx}
-              href={voucher.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors active:bg-gray-100"
-            >
-              <div className="shrink-0 text-mag-gold">
-                <SheetIcon className="w-5 h-5" />
-              </div>
-              <span className="flex-1 text-sm font-black text-mag-black">
-                {voucher.name}
-              </span>
-              <div className="shrink-0 text-gray-300">
-                <ExternalLinkIcon className="w-4 h-4" />
-              </div>
+            <a key={idx} href={voucher.url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-3 px-4 py-3.5 active:bg-ios-fill-3 transition-colors">
+              {voucher.type === 'hotel'
+                  ? <BedIcon className="w-5 h-5 text-mag-gold shrink-0" />
+                  : voucher.type === 'car'
+                  ? <CarIcon className="w-5 h-5 text-mag-gold shrink-0" />
+                  : voucher.type === 'train'
+                  ? <TrainIcon className="w-5 h-5 text-mag-gold shrink-0" />
+                  : <SheetIcon className="w-5 h-5 text-mag-gold shrink-0" />
+                }
+              <span className="flex-1 text-[15px] font-medium text-ios-label">{voucher.name}</span>
+              <ExternalLinkIcon className="w-4 h-4 text-ios-label-3 shrink-0" />
             </a>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Section 3: Checklist */}
-      <div className="pt-2">
-        <div className="flex items-center justify-between mb-4 px-1">
-          <h2 className="text-[10px] font-black tracking-[0.2em] text-mag-gray uppercase">待辦事項</h2>
+      {/* Todo Checklist */}
+      <section>
+        <div className="flex items-center justify-between mb-3 px-1">
+          <h2 className="text-[13px] font-semibold text-ios-label-2 tracking-wide">待辦事項</h2>
           <button
             onClick={handleOpenAdd}
-            className="p-2 bg-mag-black text-white shadow-md active:scale-95 transition-transform"
+            aria-label="新增待辦"
+            className="min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center text-mag-gold active:opacity-60"
           >
-            <PlusIcon className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-full bg-mag-gold-light flex items-center justify-center">
+              <PlusIcon className="w-5 h-5" />
+            </div>
           </button>
         </div>
 
-        <div className="bg-white rounded-none shadow-soft border border-gray-100 overflow-hidden divide-y divide-gray-50">
+        <div className="bg-ios-card rounded-ios-lg shadow-ios-card border border-ios-separator overflow-hidden divide-y divide-ios-separator">
           {list.map((item) => {
             const isChecked = checkedItems.has(item.id);
-
             return (
-              <div key={item.id} className="group flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors">
-                <div
+              <div key={item.id} className="flex items-center pl-3 pr-1">
+                <button
                   onClick={() => toggleItem(item.id)}
-                  className={`flex-shrink-0 w-5 h-5 border-2 flex items-center justify-center transition-all cursor-pointer ${isChecked ? 'bg-mag-gold border-mag-gold' : 'bg-white border-gray-300'
-                    }`}
+                  aria-label={isChecked ? '取消勾選' : '勾選'}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0 active:opacity-60"
                 >
-                  {isChecked && <CheckIcon className="w-3.5 h-3.5 text-white" />}
-                </div>
+                  <span className={`w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center transition-all ${isChecked ? 'bg-mag-gold border-mag-gold' : 'bg-white border-ios-separator-strong'}`}>
+                    {isChecked && <CheckIcon className="w-3.5 h-3.5 text-white" />}
+                  </span>
+                </button>
                 <span
                   onClick={() => toggleItem(item.id)}
-                  className={`flex-1 text-sm leading-snug cursor-pointer select-none ${isChecked ? 'text-gray-400 line-through' : 'text-mag-black font-black'
-                    }`}
+                  className={`flex-1 text-[15px] py-3.5 leading-snug cursor-pointer select-none tracking-tight ${isChecked ? 'text-ios-label-3 line-through' : 'text-ios-label font-medium'}`}
                 >
                   {item.text}
                 </span>
-                <div className="flex gap-1">
-                  <button onClick={() => handleOpenEdit(item)} className="p-1.5 text-gray-300 hover:text-mag-gold active:text-mag-gold">
-                    <EditIcon className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => setDeleteId(item.id)} className="p-1.5 text-gray-300 hover:text-red-500 active:text-red-500">
-                    <TrashIcon className="w-4 h-4" />
-                  </button>
-                </div>
+                <button onClick={() => handleOpenEdit(item)} aria-label="編輯" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-ios-label-3 active:text-mag-gold">
+                  <EditIcon className="w-[18px] h-[18px]" />
+                </button>
+                <button onClick={() => setDeleteId(item.id)} aria-label="刪除" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-ios-label-3 active:text-ios-red">
+                  <TrashIcon className="w-[18px] h-[18px]" />
+                </button>
               </div>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Unified Modal for Add & Edit */}
-      {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="relative bg-white w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 border-t-4 border-mag-black">
-            <h3 className="text-lg font-bold mb-4 text-mag-black">
-              {modalMode === 'add' ? '新增待辦事項' : '編輯待辦事項'}
-            </h3>
-            <input
-              ref={modalInputRef}
-              type="text"
-              value={modalText}
-              onChange={(e) => setModalText(e.target.value)}
-              placeholder="輸入內容..."
-              className="w-full bg-gray-50 border border-gray-200 p-3 mb-6 outline-none font-bold focus:border-mag-gold"
-              onKeyDown={(e) => e.key === 'Enter' && handleModalSubmit()}
-            />
-            <div className="flex gap-3">
-              <button onClick={() => setShowModal(false)} className="flex-1 py-3 border border-gray-200 font-bold text-sm text-gray-500">取消</button>
-              <button onClick={() => handleModalSubmit()} className="flex-1 py-3 bg-mag-black text-white font-bold text-sm">
-                {modalMode === 'add' ? '確認新增' : '儲存修改'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deleteId && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setDeleteId(null)} />
-          <div className="relative bg-white w-full max-w-xs p-8 shadow-2xl animate-in zoom-in-95 border-t-8 border-red-500 text-center">
-            <h3 className="text-xl font-bold mb-8 text-mag-black">確定要刪除此項目？</h3>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 py-4 bg-gray-100 font-bold text-sm text-gray-500">取消</button>
-              <button onClick={confirmDelete} className="flex-1 py-4 bg-red-500 text-white font-bold text-sm active:bg-red-600">確認刪除</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TextInputSheet
+        open={showModal}
+        mode={modalMode}
+        initialText={modalText}
+        title={{ add: '新增待辦事項', edit: '編輯待辦事項' }}
+        onClose={() => setShowModal(false)}
+        onSubmit={handleSubmit}
+      />
+      <ConfirmDeleteSheet
+        open={!!deleteId}
+        title="確定要刪除此項目？"
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };
