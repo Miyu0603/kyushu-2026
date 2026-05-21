@@ -70,8 +70,7 @@ const TAB_META: Record<Tab, { label: string; Icon: React.FC<{ active: boolean }>
 export const TabBar: React.FC<TabBarProps> = ({ activeTab, onChange }) => {
   return (
     <nav
-      className="flex-none bg-white/95 backdrop-blur-ios border-t border-ios-separator"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="flex-none bg-white/95 backdrop-blur-ios border-t border-ios-separator pb-safe-bottom"
     >
       <div className="flex">
         {Object.values(Tab).map((tab) => {
