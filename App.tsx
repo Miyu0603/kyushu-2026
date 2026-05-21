@@ -148,20 +148,18 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="relative h-full font-sans text-ios-label bg-white selection:bg-mag-gold selection:text-white">
+    <div className="flex flex-col h-full font-sans text-ios-label bg-white selection:bg-mag-gold selection:text-white">
       {selectedLocationId && LOCATION_DETAILS[selectedLocationId] && (
-        <DetailView location={LOCATION_DETAILS[selectedLocationId]} onBack={() => setSelectedLocationId(null)} />
+        <div className="absolute inset-0 z-50">
+          <DetailView location={LOCATION_DETAILS[selectedLocationId]} onBack={() => setSelectedLocationId(null)} />
+        </div>
       )}
 
       <Header weather={weather} />
 
       <main
-        className="px-4 h-full overflow-y-auto overscroll-contain bg-ios-bg"
-        style={{
-          paddingTop: 'calc(env(safe-area-inset-top) + 68px)',
-          paddingBottom: 'calc(env(safe-area-inset-bottom) + 72px)',
-          WebkitOverflowScrolling: 'touch',
-        }}
+        className="flex-1 min-h-0 px-4 overflow-y-auto overscroll-contain bg-ios-bg"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {activeTab === Tab.ITINERARY && (
           <ItineraryView
