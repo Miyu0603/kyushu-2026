@@ -156,6 +156,7 @@ const App: React.FC = () => {
       )}
 
       <Header weather={weather} />
+      <TabBar activeTab={activeTab} onChange={setActiveTab} />
 
       <main
         className="flex-1 min-h-0 px-4 overflow-y-auto overscroll-contain bg-ios-bg"
@@ -191,8 +192,6 @@ const App: React.FC = () => {
           <InfoView />
         )}
       </main>
-
-      <TabBar activeTab={activeTab} onChange={setActiveTab} />
     </div>
   );
 };
