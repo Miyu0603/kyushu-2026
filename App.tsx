@@ -159,7 +159,7 @@ const App: React.FC = () => {
 
       <main
         className="flex-1 min-h-0 px-4 overflow-y-auto overscroll-contain bg-ios-bg"
-        style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 'calc(52px + env(safe-area-inset-bottom, 0px))' }}
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {activeTab === Tab.ITINERARY && (
           <ItineraryView
