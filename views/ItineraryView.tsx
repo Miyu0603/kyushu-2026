@@ -219,9 +219,11 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ onNavigateToDetail
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setShowScrollTop(window.scrollY > 300);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const mainEl = document.querySelector('main');
+    if (!mainEl) return;
+    const handleScroll = () => setShowScrollTop(mainEl.scrollTop > 300);
+    mainEl.addEventListener('scroll', handleScroll);
+    return () => mainEl.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
@@ -282,7 +284,10 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ onNavigateToDetail
       </div>
 
       <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onClick={() => {
+          const mainEl = document.querySelector('main');
+          if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
         aria-label="回到頂部"
         className={`fixed right-5 z-40 w-11 h-11 flex items-center justify-center bg-mag-gold text-white rounded-full shadow-float transition-all duration-300 active:scale-90 ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6 pointer-events-none'}`}
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 96px)' }}
