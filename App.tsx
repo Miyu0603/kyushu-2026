@@ -148,7 +148,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full font-sans text-ios-label bg-white selection:bg-mag-gold selection:text-white">
+    <div className="flex flex-col h-[100dvh] overflow-hidden font-sans text-ios-label bg-white selection:bg-mag-gold selection:text-white">
       {selectedLocationId && LOCATION_DETAILS[selectedLocationId] && (
         <div className="absolute inset-0 z-50">
           <DetailView location={LOCATION_DETAILS[selectedLocationId]} onBack={() => setSelectedLocationId(null)} />
