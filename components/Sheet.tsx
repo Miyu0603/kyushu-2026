@@ -53,7 +53,7 @@ export const Sheet: React.FC<SheetProps> = ({
           <div className="w-9 h-[5px] rounded-full bg-ios-label-3" />
         </div>
         {title && (
-          <div className="px-5 pt-2 pb-3 text-center">
+          <div className="px-5 pt-2 pb-3">
             <h3 className="text-ios-headline font-semibold text-ios-label">{title}</h3>
           </div>
         )}

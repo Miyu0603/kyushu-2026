@@ -390,20 +390,20 @@ export const CostView: React.FC<CostViewProps> = ({ expenses, isLoading, onRefre
       {/* Add / Edit Sheet */}
       <Sheet open={showModal} onClose={() => setShowModal(false)} title={mode === 'edit' ? '編輯消費' : '新增消費'}>
         <form onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }} onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
+          <div className="grid grid-cols-2 gap-3 items-end">
+            <div className="flex flex-col">
               <label className="text-[12px] font-semibold text-ios-label-2 mb-1.5 block">日期</label>
               <input type="date" value={date} onChange={e => setDate(e.target.value)}
                 className="w-full bg-ios-fill-4 px-3 py-2.5 rounded-ios text-[15px] font-medium text-ios-label outline-none" />
             </div>
-            <div>
+            <div className="flex flex-col">
               <label className="text-[12px] font-semibold text-ios-label-2 mb-1.5 block">支付者</label>
               <div className="flex bg-ios-fill-3 p-[3px] rounded-ios">
                 <button type="button" onClick={() => setPayer('想想')}
-                  className={`flex-1 py-2 text-[13px] font-semibold rounded-[11px] transition-all`}
+                  className="flex-1 py-2.5 text-[13px] font-semibold rounded-[11px] transition-all"
                   style={payer === '想想' ? { backgroundColor: XIANG_COLOR, color: '#fff' } : { color: '#3C3C43' }}>想想</button>
                 <button type="button" onClick={() => setPayer('錢錢')}
-                  className={`flex-1 py-2 text-[13px] font-semibold rounded-[11px] transition-all`}
+                  className="flex-1 py-2.5 text-[13px] font-semibold rounded-[11px] transition-all"
                   style={payer === '錢錢' ? { backgroundColor: QIAN_COLOR, color: '#fff' } : { color: '#3C3C43' }}>錢錢</button>
               </div>
             </div>
