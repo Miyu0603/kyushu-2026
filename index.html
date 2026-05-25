@@ -121,8 +121,34 @@
     }
   </script>
   <style>
-    html, body, #root {
-      height: 100dvh;
+    /*
+     * iOS PWA 高度修正策略（2026 版）：
+     *
+     * 問題1：iOS 26.1 破壞了 black-translucent，PWA 不再全螢幕
+     * 問題2：viewport-fit=cover 導致 document 向上偏移 safe-area-inset-top，
+     *        底部出現等高的空白條
+     * 問題3：100dvh 在 iOS 冷啟動時值不準確
+     *
+     * 解法：
+     * - html 用 min-height: calc(100% + env(safe-area-inset-top)) 填補底部偏移空白
+     * - body/#root 用 JS 計算的 --app-height 取代 100dvh（最可靠）
+     * - html background-color 覆蓋任何殘留空白
+     */
+
+    html {
+      /* 填補 document 向上偏移後底部空白 (iOS PWA classic fix) */
+      height: 100%;
+      min-height: calc(100% + env(safe-area-inset-top));
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background-color: #FFFFFF;
+    }
+
+    body, #root {
+      /* --app-height 由 JS 在執行時設定為 window.innerHeight，比 100dvh 更可靠 */
+      height: var(--app-height, 100dvh);
       margin: 0;
       padding: 0;
       overflow: hidden;
@@ -166,6 +192,24 @@
 <body class="bg-mag-paper text-mag-black antialiased selection:bg-mag-gold selection:text-white">
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
+
+  <!-- iOS PWA 高度修正：用 window.innerHeight 取代不穩定的 100dvh -->
+  <script>
+    (function () {
+      function setAppHeight() {
+        var h = window.innerHeight;
+        document.documentElement.style.setProperty('--app-height', h + 'px');
+      }
+      // 初始設定
+      setAppHeight();
+      // resize 時更新（橫轉直等）
+      window.addEventListener('resize', setAppHeight);
+      // orientationchange 後略等 Safari 穩定再設定
+      window.addEventListener('orientationchange', function () {
+        setTimeout(setAppHeight, 150);
+      });
+    })();
+  </script>
 </body>
 
 </html>
