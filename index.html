@@ -194,20 +194,55 @@
   <script type="module" src="/index.tsx"></script>
 
   <!-- iOS PWA 高度修正：用 window.innerHeight 取代不穩定的 100dvh -->
+  <!-- 同時解決冷啟動 timing race：iOS PWA 啟動時 viewport 尚未穩定，需多次重試 + localStorage 記憶上次正確高度 -->
   <script>
     (function () {
-      function setAppHeight() {
-        var h = window.innerHeight;
+      var STORAGE_KEY = 'pwa-device-height';
+      var MIN_SANE_HEIGHT = 500; // 小於此值視為尚未穩定，不採用
+
+      function setAppHeight(h) {
         document.documentElement.style.setProperty('--app-height', h + 'px');
       }
-      // 初始設定
-      setAppHeight();
-      // resize 時更新（橫轉直等）
-      window.addEventListener('resize', setAppHeight);
-      // orientationchange 後略等 Safari 穩定再設定
-      window.addEventListener('orientationchange', function () {
-        setTimeout(setAppHeight, 150);
+
+      function measureAndSet() {
+        var h = window.innerHeight;
+        setAppHeight(h);
+        // 高度合理才存入 localStorage，供下次冷啟動使用
+        if (h >= MIN_SANE_HEIGHT) {
+          try { localStorage.setItem(STORAGE_KEY, String(h)); } catch (e) {}
+        }
+        return h;
+      }
+
+      // 1. 先用 localStorage 記憶的高度立即填入，避免冷啟動白條閃爍
+      try {
+        var stored = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+        if (stored >= MIN_SANE_HEIGHT) {
+          setAppHeight(stored);
+        }
+      } catch (e) {}
+
+      // 2. 立即測量一次
+      measureAndSet();
+
+      // 3. 冷啟動多次重試：iOS PWA viewport 通常在 300–800ms 內穩定
+      [50, 150, 300, 600, 1000].forEach(function (delay) {
+        setTimeout(measureAndSet, delay);
       });
+
+      // 4. resize 時更新（橫轉直等）
+      window.addEventListener('resize', measureAndSet);
+
+      // 5. orientationchange 後略等 Safari 穩定
+      window.addEventListener('orientationchange', function () {
+        setTimeout(measureAndSet, 150);
+        setTimeout(measureAndSet, 500);
+      });
+
+      // 6. visualViewport API（iOS 13+ 更精確）
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', measureAndSet);
+      }
     })();
   </script>
 </body>
