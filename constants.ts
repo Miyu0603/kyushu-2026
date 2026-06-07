@@ -413,6 +413,16 @@ export const LOCATION_DETAILS: Record<string, LocationDetail> = {
   },
 
   // ===== Day 5 景點 =====
+  'kyushu_safari': {
+    id: 'kyushu_safari',
+    title: '九州自然動物園（アフリカンサファリ）',
+    description: '日本規模最大的自駕式野生動物園，可搭乘叢林巴士或自行開車穿越園區，近距離與獅子、老虎、長頸鹿等動物接觸。',
+    address: '大分縣宇佐市安心院町下毛763',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=African+Safari+Kyushu',
+    mapCode: '199 210 838*27',
+    openingHours: '9:00–17:00（平日）；9:00–17:30（假日）；全年無休',
+    websiteUrl: 'https://www.africansafari.co.jp/',
+  },
   'beppu_jigoku': {
     id: 'beppu_jigoku',
     title: '別府地獄巡禮 & 世界之塔',
@@ -621,7 +631,7 @@ export const ITINERARY: DaySchedule[] = [
     accommodationMapUrl: 'https://maps.app.goo.gl/7RikENXPYuJ9szba7',
     mapUrl: 'https://www.google.com/maps/dir/Beppu+Jigoku/Yufuin/Hakata+Station',
     events: [
-      { time: '09:00', description: '別府地獄巡禮 & 世界之塔', note: '停留 3 小時', locationId: 'beppu_jigoku' },
+      { time: '08:30', description: '九州自然動物園（アフリカンサファリ）', note: '停留 3 小時', locationId: 'kyushu_safari' },
       { time: '12:30', description: '抵達由布院並辦理還車', note: '結束自駕，最晚 13:00 還車' },
       { time: '13:00', description: '由布院湯之坪街道 & 金鱗湖 散策', note: '停留 2 小時', locationId: 'yufuin_kinrinko' },
       { time: '15:56', description: '搭乘觀光特急「由布院之森」前往博多', isHighlight: true, locationId: 'yufuin_no_mori' },
